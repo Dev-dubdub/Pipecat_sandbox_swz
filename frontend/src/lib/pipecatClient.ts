@@ -80,12 +80,13 @@ export function createPipecatClient(
   });
 
   const callbacks: Record<string, (...args: unknown[]) => void> = {
-    onLLMFunctionCallInProgress: (data: {
-      function_name?: string;
-      tool_call_id: string;
-      arguments?: Record<string, unknown>;
-    }) => {
-      if (data.function_name && onToolCallRef.current) {
+    onLLMFunctionCallInProgress: (...args: unknown[]) => {
+      const data = args[0] as {
+        function_name?: string;
+        tool_call_id: string;
+        arguments?: Record<string, unknown>;
+      };
+      if (data?.function_name && onToolCallRef.current) {
         onToolCallRef.current(data.function_name, data.arguments ?? {});
       }
     },
