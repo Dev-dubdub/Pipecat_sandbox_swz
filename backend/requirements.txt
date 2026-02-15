@@ -1,3 +1,4 @@
+boto3>=1.35.0
 pipecat-ai[webrtc,openai,deepgram,cartesia,soniox,google,grok]>=0.0.100
 google-genai>=1.0.0
 fastapi>=0.115.0

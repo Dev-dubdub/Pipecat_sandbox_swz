@@ -17,11 +17,15 @@ from pipecat.transports.smallwebrtc.request_handler import (
 )
 
 from config import create_session, get_backend_base_url, get_session_config
+from aws_secrets import load_secrets_from_aws
 
 # Import bot runner - will be implemented in bot.py
 # from bot import run_bot
 
 load_dotenv(override=True)
+# When deployed (App Runner): load from AWS Secrets Manager (no env vars needed)
+# Locally: this fails silently; .env above is used
+load_secrets_from_aws()
 
 app = FastAPI(title="Pipecat Sandbox API")
 
@@ -51,6 +55,17 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 
+def _get_base_url_for_request(request: Request) -> str:
+    """Use BACKEND_BASE_URL if set; otherwise derive from request (for App Runner, ALB, etc.)."""
+    base = get_backend_base_url()
+    if base and base != "http://localhost:7860":
+        return base.rstrip("/")
+    # Fallback: derive from Host + X-Forwarded-Proto (set by App Runner, ALB, etc.)
+    host = request.headers.get("host", "localhost:7860")
+    proto = request.headers.get("x-forwarded-proto") or request.url.scheme or "https"
+    return f"{proto}://{host}".rstrip("/")
+
+
 @app.post("/api/start")
 async def start(request: Request):
     """
@@ -59,7 +74,7 @@ async def start(request: Request):
     """
     body = await request.json()
     session_id = str(uuid.uuid4())
-    base_url = get_backend_base_url()
+    base_url = _get_base_url_for_request(request)
     webrtc_url = f"{base_url}/api/offer?session_id={session_id}"
 
     # Accept both snake_case and camelCase from client

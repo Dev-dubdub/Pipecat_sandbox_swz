@@ -15,6 +15,11 @@ import {
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:7860";
 
+// Verify env is loaded (Vite inlines at build time; set VITE_API_URL in Vercel for production)
+if (import.meta.env.DEV) {
+  console.log("[Sandbox] API_URL:", API_URL);
+}
+
 export function Sandbox() {
   const state = useSandboxState();
   const { toolCalls, addToolCall, clearToolCalls } = useToolCalls();
